@@ -228,22 +228,23 @@ void printInt(int value) {
 }
 
 void printFloat(float value) {
-	if (value < 0.0) printChar(_minus);
+    if (value < 0.0) printChar(_minus);
 
-	if (isnan(value)) {
-		printString((_N, _a, _N));
-	} else if (isinf(value)) {
-		printString((_i, _n, _f));
-	} else {
-		float i, f = modf(abs(value), i);
+    if (isnan(value)) {
+        printString((_N, _a, _N));
+    } else if (isinf(value)) {
+        printString((_i, _n, _f));
+    } else {
+        float v = abs(value) * pow(float(text.base), float(text.fpPrecision));
+        float i, f = modf(floor(v + 0.5) / pow(float(text.base), float(text.fpPrecision)), i);
 
-		uint integralPart   = uint(i);
-		uint fractionalPart = uint(f * pow(float(text.base), float(text.fpPrecision)) + 0.5);
+        uint integralPart = uint(i);
+        uint fractionalPart = uint(f * pow(float(text.base), float(text.fpPrecision)) + 0.5);
 
-		printUnsignedInt(integralPart);
-		printChar(_dot);
-		printUnsignedInt(fractionalPart, text.fpPrecision);
-	}
+        printUnsignedInt(integralPart);
+        printChar(_dot);
+        printUnsignedInt(fractionalPart, text.fpPrecision);
+    }
 }
 
 void printBool(bool value) {
