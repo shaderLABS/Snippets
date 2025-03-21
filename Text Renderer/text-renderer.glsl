@@ -30,6 +30,10 @@
   text.fgCol = vec4(1.0, 0.0, 0.0, 1.0);
   text.bgCol = vec4(0.0, 0.0, 0.0, 1.0);
 
+  // You can also set custom padding for characters and background
+  text.bgPadding = ivec2(3, 2);
+  text.charPadding = ivec2(1, 3);
+
   // ...as well as the number base and number of decimal places to print
   text.base = 16;
   text.fpPrecision = 4;
@@ -141,26 +145,30 @@ const ivec2 spaceSize = charSize + ivec2(charSpacing, lineSpacing);
 // Text renderer
 
 struct Text {
-	vec4 result;     // Output color from the text renderer
-	vec4 fgCol;      // Text foreground color
-	vec4 bgCol;      // Text background color
-	ivec2 fragPos;   // The position of the fragment (can be scaled to adjust the size of the text)
-	ivec2 textPos;   // The position of the top-left corner of the text
-	ivec2 charPos;   // The position of the next character in the text
-	int base;        // Number base
-	int fpPrecision; // Number of decimal places to print
+    vec4 result;     // Output color from the text renderer
+    vec4 fgCol;      // Text foreground color
+    vec4 bgCol;      // Text background color
+    ivec2 fragPos;   // The position of the fragment (can be scaled to adjust the size of the text)
+    ivec2 textPos;   // The position of the top-left corner of the text
+    ivec2 charPos;   // The position of the next character in the text
+    int base;        // Number base
+    int fpPrecision; // Number of decimal places to print
+    ivec2 charPadding; // Custom character padding
+    ivec2 bgPadding;   // Custom background padding
 } text;
 
 // Fills the global text object with default values
 void beginText(ivec2 fragPos, ivec2 textPos) {
-	text.result      = vec4(0.0);
-	text.fgCol       = vec4(1.0);
-	text.bgCol       = vec4(0.0, 0.0, 0.0, 0.6);
-	text.fragPos     = fragPos;
-	text.textPos     = textPos;
-	text.charPos     = ivec2(0);
-	text.base        = 10;
-	text.fpPrecision = 2;
+    text.result      = vec4(0.0);
+    text.fgCol       = vec4(1.0);
+    text.bgCol       = vec4(0.0, 0.0, 0.0, 0.6);
+    text.fragPos     = fragPos;
+    text.textPos     = textPos;
+    text.charPos     = ivec2(0);
+    text.base        = 10;
+    text.fpPrecision = 2;
+    text.charPadding =  ivec2(0); // Paddings by SpacEagle17
+    text.bgPadding   = ivec2(3);
 }
 
 // Applies the rendered text to the fragment
@@ -169,20 +177,31 @@ void endText(inout vec3 fragColor) {
 }
 
 void printChar(uint character) {
-	ivec2 pos = text.fragPos - text.textPos - spaceSize * text.charPos * ivec2(1, -1) + ivec2(0, spaceSize.y);
+    // Calculate effective spacing that includes current padding settings
+    ivec2 effectiveSpaceSize = spaceSize + text.charPadding * 2;
+    
+    // Use this effective spacing for positioning
+    ivec2 pos = text.fragPos - text.textPos - effectiveSpaceSize * text.charPos * ivec2(1, -1) + ivec2(0, effectiveSpaceSize.y);
 
-	uint index = uint(charWidth - pos.x + pos.y * charWidth + 1u);
+    // Draw background (larger area with padding)
+    ivec2 bgPos = pos + text.bgPadding;
+    if (clamp(bgPos, ivec2(0), effectiveSpaceSize + text.bgPadding * 2 - 1) == bgPos) {
+        float bgAlpha = text.result.a;
+        // Only apply background if this pixel hasn't been colored yet
+        if (bgAlpha < 0.01) {
+            text.result = mix(text.result, text.bgCol, text.bgCol.a);
+        }
+    }
 
-	// Draw background
-	if (clamp(pos, ivec2(0), spaceSize - 1) == pos)
-		text.result = mix(text.result, text.bgCol, text.bgCol.a);
+    // Draw character
+    ivec2 charPos = pos - text.charPadding;
+    if (clamp(charPos, ivec2(0), charSize - 1) == charPos) {
+        uint index = uint(charWidth - charPos.x + charPos.y * charWidth + 1);
+        text.result = mix(text.result, text.fgCol, text.fgCol.a * float(character >> index & 1u));
+    }
 
-	// Draw character
-	if (clamp(pos, ivec2(0), charSize - 1) == pos)
-		text.result = mix(text.result, text.fgCol, text.fgCol.a * float(character >> index & 1u));
-
-	// Advance to next character
-	text.charPos.x++;
+    // Advance to next character
+    text.charPos.x++;
 }
 
 #define printString(string) {                                               \
