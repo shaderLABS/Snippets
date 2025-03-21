@@ -1,4 +1,4 @@
-## GLSL Debug Text Renderer
+# GLSL Debug Text Renderer
 > by SixthSurge
 
 Character set based on Monocraft by IdreesInc
@@ -6,11 +6,11 @@ https://github.com/IdreesInc/Monocraft
 
 With additional characters added by WoMspace
 
-### Usage
+## Usage
 ```glsl
 // Call beginText to initialize the text renderer. You can scale the fragment position to adjust the size of the text
 beginText(ivec2(gl_FragCoord.xy), ivec2(0, viewHeight));
-        ^ fragment position     ^ text box position (upper left corner)
+          ^ fragment position     ^ text box position (upper left corner)
 
 // You can print various data types
 printBool(false);
