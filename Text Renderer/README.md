@@ -28,6 +28,10 @@ printLine();
 text.fgCol = vec4(1.0, 0.0, 0.0, 1.0);
 text.bgCol = vec4(0.0, 0.0, 0.0, 1.0);
 
+// You can also set custom padding for characters and background
+text.bgPadding = ivec2(3, 2);
+text.charPadding = ivec2(1, 3);
+
 // ...as well as the number base and number of decimal places to print
 text.base = 16;
 text.fpPrecision = 4;
